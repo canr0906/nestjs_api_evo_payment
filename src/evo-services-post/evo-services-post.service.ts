@@ -4,6 +4,7 @@ import { UpdateEvoServicesPostDto } from './dto/update-evo-services-post.dto';
 import { HttpService } from '@nestjs/axios';
 import { env } from 'process';
 import { catchError, map, tap } from 'rxjs';
+import { Authenticate3D } from './interfaces/data-authenticate3d.interface';
 
 @Injectable()
 export class EvoServicesPostService {
@@ -12,16 +13,20 @@ export class EvoServicesPostService {
   private readonly merchant_id = env.MERCHANT_ID;
   private readonly merchant_pass = env.MERCHANT_PASS;
 
+  private readonly urlEvo = env.EVO_URL;
+  private readonly merchantId = env.MERCHANT_ID;
+  private readonly merchantPass = env.MERCHANT_PASS;
+
   constructor(private http: HttpService){}
 
   async generateSession(): Promise<any> {
     
-    const headersRequest = {
+    const headers = {
       'Content-Type': 'application/json', // afaik this one is not needed
       'Authorization': 'Basic ' + btoa(`merchant.${this.merchant_id}` + ":" + this.merchant_pass)
     };
 
-    return await this.http.post(this.url_session,JSON.stringify({"session": {"authenticationLimit": 25}}),{ headers: headersRequest })
+    return await this.http.post(`${this.urlEvo}/${this.merchantId}/session`,JSON.stringify({"session": {"authenticationLimit": 25}}),{ headers})
     .pipe(
       tap(res => console.log(res)),
       map(res =>{
@@ -29,6 +34,25 @@ export class EvoServicesPostService {
       }),
       catchError(()=> {
         throw new ForbiddenException('Api not Available')
+      })
+    );
+  }
+
+  async updateSession(dataReq: Authenticate3D): Promise<any> {
+    const headers = {
+      'Content-Type': 'application/json', // afaik this one is not needed
+      'Authorization': 'Basic ' + btoa(`merchant.${this.merchant_id}` + ":" + this.merchant_pass)
+    };
+    let jsonData  = {"order":dataReq.order, "customer":dataReq.customer}
+    console.log(jsonData)
+    return await this.http.put(`${this.urlEvo}/${this.merchantId}/session/${dataReq.sessionid}`,JSON.stringify(jsonData),{ headers})
+    .pipe(
+      tap(res => console.log(res)),
+      map(res =>{
+        return res.data;
+      }),
+      catchError(error=> {
+        throw new ForbiddenException('Api not Available: ' + error)
       })
     );
   }
@@ -44,6 +68,7 @@ export class EvoServicesPostService {
       })
     );
   }
+  
 
   create(createEvoServicesPostDto: CreateEvoServicesPostDto) {
     return 'This action adds a new evoServicesPost';

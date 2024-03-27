@@ -3,6 +3,7 @@ import { EvoServicesPostService } from './evo-services-post.service';
 import { CreateEvoServicesPostDto } from './dto/create-evo-services-post.dto';
 import { UpdateEvoServicesPostDto } from './dto/update-evo-services-post.dto';
 import { error } from 'console';
+import { Authenticate3D } from './interfaces/data-authenticate3d.interface';
 
 /*
 https://www.youtube.com/watch?v=-ahCssisfwQ
@@ -16,6 +17,18 @@ export class EvoServicesPostController {
   @Post('/generatesession')
   generateSession(){
     return this.evoServicesPostService.generateSession()
+    .then(resp =>{
+      return resp;
+    })
+    .catch(error =>{
+      throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR)
+    });
+  }
+
+  @Post('/updatesession')
+  updateSession(@Body() dataReq: Authenticate3D) {
+    //console.log(dataReq)
+    return this.evoServicesPostService.updateSession(dataReq)
     .then(resp =>{
       return resp;
     })
